@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: task-manager-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - PORT=5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - task-manager-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task-manager-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://backend:5000
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - task-manager-network
+
+networks:
+  task-manager-network:
+    driver: bridge
+
+volumes:
+  task-data:
+    driver: local
